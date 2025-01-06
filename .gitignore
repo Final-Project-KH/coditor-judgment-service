@@ -1,0 +1,10 @@
+# Ignore intelliJ setting directories
+.idea
+
+# Ignore Python cache directories
+__pycache__/
+*.pyc
+*.pyo
+
+# Ignore Dockerfile
+Dockerfile

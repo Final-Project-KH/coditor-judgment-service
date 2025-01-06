@@ -1,14 +1,13 @@
 import random
 import string
 import subprocess
-import json
 
 
-def random_string(length=8):
+def random_string(length: int=8) -> str:
     chars = string.ascii_lowercase + string.digits
     return ''.join(random.choice(chars) for _ in range(length))
 
-def execute(encoded_code: str, memory_limit=128, cpu_core_limit=0.5, timeout=5):
+def execute(code_encoded: str, testcase_encoded: str, memory_limit: int=128, cpu_core_limit: float=0.5, timeout: int=5) -> dict:
     # docker container 내부 랜덤 마운트 경로(파일 쓰기 가능한 경로) 설정
     mount_path = f"/tmp/{random_string(128)}"
 
@@ -39,12 +38,13 @@ def execute(encoded_code: str, memory_limit=128, cpu_core_limit=0.5, timeout=5):
         "--pids-limit", "30",
 
         # 사용할 docker image
-        "my-runner:latest",
+        "java-code-runner:v0.0.1",
 
         # container에 전달할 값
         "python", "/app/app.py",
-        encoded_code,
-        mount_path
+        code_encoded,
+        mount_path,
+        testcase_encoded
     ]
 
     response = {}
@@ -54,7 +54,7 @@ def execute(encoded_code: str, memory_limit=128, cpu_core_limit=0.5, timeout=5):
     except subprocess.TimeoutExpired:
         response["success"] = False
         response["error"] = f"실행 시간 {timeout}s 초과"
-        return json.dumps(response, ensure_ascii=False).encode('utf-8')
+        return response
 
     # 컴파일 에러나 런타임 에러일 경우, stdout에서 에러 메시지 return
     if proc.returncode != 0:
@@ -70,7 +70,7 @@ def execute(encoded_code: str, memory_limit=128, cpu_core_limit=0.5, timeout=5):
             print(proc.returncode)
             print(proc.stdout)
             print(proc.stderr)
-        return json.dumps(response, ensure_ascii=False).encode('utf-8')
+        return response
 
     result = proc.stdout.split('\n')
     response["success"] = True
@@ -78,4 +78,4 @@ def execute(encoded_code: str, memory_limit=128, cpu_core_limit=0.5, timeout=5):
     response["memoryUsage"] = result[2]
     response["runningTime"] = result[3]
     response["codeSize"] = result[4]
-    return json.dumps(response, ensure_ascii=False).encode('utf-8')
+    return response

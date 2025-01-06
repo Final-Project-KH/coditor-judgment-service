@@ -1,4 +1,6 @@
-from flask import Flask, request
+import base64
+from flask import Flask, request, stream_with_context, Response
+import json
 import coditor
 
 
@@ -7,21 +9,61 @@ import coditor
 # 이 초기화 방식은 Flask는 현재 모듈이 어디에서 실행되는지 자동으로 파악할 수 있음
 app = Flask(__name__)
 
-@app.route("/execute-code", methods=['POST'])
-def execute_code():
-    request_body = request.json
-    question_id = request_body["question_id"]
-    encoded_code = request_body["code"]
+def validate_required_fields(json_data) -> bool:
+    required_fields = ["code", "language", "questionId"]
+    missing_fields = [field for field in required_fields if json_data.get(field) is None]
 
-    if question_id in []:
-        # 문제 종류에 따라 자원 조정이 필요한 경우
-        pass
+    if not json_data or missing_fields:
+        return False
+    return True
+
+
+@app.route("/execute-code", methods=['POST'])
+def execute_code() :
+    data = request.get_json()
+
+    if not validate_required_fields(data):
+        return json.dumps({"success": False, "error": "Invalid request body format"}, ensure_ascii=False).encode('utf-8'), 400
+
+    code_encoded = data["code"]
+    testcases = coditor.java_test_cases.get(data["questionId"])
+
+    # if question_id in []:
+    #     # 문제 종류에 따라 자원 조정이 필요한 경우
+    #     pass
 
     # run 함수는 아래 3개 값이 default 매개변수로 설정되어 있습니다.
     # memory_limit = 128
     # cpu_core_limit = 0.5
     # timeout = 5
-    return coditor.execute(encoded_code)
+
+    @stream_with_context
+    def generate():
+        # 1) SSE 시작
+        yield "event: start\n"
+        yield f"data: {json.dumps({'msg': 'test start', 'total': len(testcases)}, ensure_ascii=False)}\n\n"
+
+        # 2) 테스트 케이스를 순차적으로 실행
+        for tc in testcases:
+            testcase_json = json.dumps({"input": tc[0]}, ensure_ascii=False)
+            testcases_encoded = base64.b64encode(testcase_json.encode("utf-8")).decode("utf-8")
+
+            test_result = coditor.execute(code_encoded, testcases_encoded)
+
+            """
+                test_result의 result와 tc[1]을 비교하여 성공 실패 처리할 것
+            """
+
+            # 테스트 결과 이벤트 전송
+            yield "event: testResult\n"
+            yield f"data: {json.dumps({'testcase': tc, 'result': test_result}, ensure_ascii=False)}\n\n"
+
+        # 3) 모든 테스트 케이스 완료 후
+        yield "event: complete\n"
+        yield f"data: {json.dumps({'msg': 'test end'}, ensure_ascii=False)}\n\n"
+
+    return Response(generate(), mimetype='text/event-stream')
+
 
 if __name__ == '__main__':
     app.run()
@@ -29,7 +71,7 @@ if __name__ == '__main__':
 """
 
 
-######### 테스트용 sample (두 정수의 덧셈) #########
+######### 답안 제출 코드 sample (java 문제1: 두 정수의 덧셈) #########
 public class Main {
     public static void main(String[] args) {
         Solution solution = new Solution();

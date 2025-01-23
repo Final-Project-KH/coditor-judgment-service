@@ -21,8 +21,8 @@ class JobRepository:
     def __init__(self):
         self._redis_conn = RedisConnection()
 
-    def find_by_member_id(self, member_id: str) -> List[Optional[Dict]]:
-        key_pattern = f"{member_id}:*"
+    def find_by_user_id(self, user_id: str) -> List[Optional[Dict]]:
+        key_pattern = f"{user_id}:*"
         try:
             # 기본적으로 str 반환, decode 관련 설정을 만지면 bytes 반환 가능
             keys: List[Union[str, bytes]] = list(self._redis_conn.execute_with_retry(
@@ -41,11 +41,11 @@ class JobRepository:
             return jobs
 
         except Exception as e:
-            print(f"[find_by_member_id] Unexpected error: {e}")
+            print(f"[find_by_user_id] Unexpected error: {e}")
             return []
 
-    def find_by_member_id_and_job_id(self, member_id: str, job_id: str) -> Optional[Dict]:
-        key = f"{member_id}:{job_id}"
+    def find_by_user_id_and_job_id(self, user_id: str, job_id: str) -> Optional[Dict]:
+        key = f"{user_id}:{job_id}"
         try:
             # 기본적으로 str 반환, 관련 설정을 만지면 bytes 반환 가능, 값이 존재하지 않으면 None
             job: [str, bytes, None] = self._redis_conn.execute_with_retry(
@@ -58,13 +58,13 @@ class JobRepository:
             return job
 
         except Exception as e:
-            print(f"[find_by_member_id_and_job_id] Unexpected error: {e}")
+            print(f"[find_by_user_id_and_job_id] Unexpected error: {e}")
             return None
 
-    def save(self, member_id: str, job: dict, timeout: int) -> int:
-        key = f"{member_id}:{job['jobId']}"
+    def save(self, user_id: str, job: dict, timeout: int) -> int:
+        key = f"{user_id}:{job['jobId']}"
         try:
-            if self._is_job_max_count_exceed(member_id):
+            if self._is_job_max_count_exceed(user_id):
                 return JOB_MAX_COUNT_EXCEEDED
 
             self._redis_conn.execute_with_retry(
@@ -78,16 +78,16 @@ class JobRepository:
             return UNEXPECTED_ERROR
 
     def update(self,
-        member_id: str,
+        user_id: str,
         job_id: str,
         stop_flag: Optional[bool] = None,
         last_testcase_index: Optional[int] = None,
         status: Optional[str] = None,
         results: Optional[List] = None
     ) -> int:
-        key = f"{member_id}:{job_id}"
+        key = f"{user_id}:{job_id}"
         try:
-            job = self.find_by_member_id_and_job_id(member_id, job_id)
+            job = self.find_by_user_id_and_job_id(user_id, job_id)
             if not job:
                 return JOB_NO_LONGER_EXISTS
 
@@ -125,15 +125,15 @@ class JobRepository:
             # 그 외에는 알 수 없는 상태
             else:
                 print(f"[update] Unknown job state. job={job}")
-                self.delete(member_id, job_id)
+                self.delete(user_id, job_id)
                 return UNEXPECTED_ERROR
 
         except Exception as e:
             print(f"[update] Unexpected error: {e}")
             return UNEXPECTED_ERROR
 
-    def delete(self, member_id: str, job_id: str) -> int:
-        key = f"{member_id}:{job_id}"
+    def delete(self, user_id: str, job_id: str) -> int:
+        key = f"{user_id}:{job_id}"
         try:
             result = self._redis_conn.execute_with_retry(
                 self._redis_conn.client.delete, key
@@ -144,7 +144,7 @@ class JobRepository:
             print(f"[save] Unexpected error: {e}")
             return UNEXPECTED_ERROR
 
-    def _is_job_max_count_exceed(self, member_id: str) -> bool:
-        active_jobs = self.find_by_member_id(member_id)
+    def _is_job_max_count_exceed(self, user_id: str) -> bool:
+        active_jobs = self.find_by_user_id(user_id)
         return len(active_jobs) >= MAX_ACTIVE_JOBS_PER_MEMBER
 

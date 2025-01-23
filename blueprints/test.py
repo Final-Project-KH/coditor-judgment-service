@@ -18,6 +18,6 @@ def test() :
 @test_bp.route('/stop', methods=['POST'])
 def stop():
     request_data = request.get_json()
-    code = job_repository.update(request_data['memberId'], request_data['jobId'], stop_flag=True)
+    code = job_repository.update(request_data['userId'], request_data['jobId'], stop_flag=True)
     print(code)
     return "", 200

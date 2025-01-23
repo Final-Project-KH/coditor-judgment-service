@@ -22,9 +22,9 @@ def validate_required_fields(json_data: dict, endpoint: str) -> bool:
     :return: 필수 필드가 모두 존재하면 True, 아니면 False
     """
     required_fields = {
-        "/job/create": ["code", "codeLanguage", "questionId", "memberId"],
-        "/job/execute": ["memberId", "jobId"],
-        "/job/get-missing-results": ["memberId", "jobId", "lastEventId"]
+        "/job/create": ["code", "codeLanguage", "questionId", "userId"],
+        "/job/execute": ["userId", "jobId"],
+        "/job/get-missing-results": ["userId", "jobId", "lastEventId"]
     }
 
     if not json_data:

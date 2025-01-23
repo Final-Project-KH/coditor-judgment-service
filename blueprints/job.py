@@ -42,7 +42,7 @@ def validate_request():
         request_body = request.get_json()
         if not common.validate_required_fields(request_body, '/job/create'):
             return error_response(
-                "Request body must contain 'code', 'codeLanguage', 'questionId', and 'memberId'",
+                "Request body must contain 'code', 'codeLanguage', 'questionId', and 'userId'",
                 400
             )
         testcases = coditor.TESTCASE_DICT.get(str(request_body["questionId"]))
@@ -54,15 +54,15 @@ def validate_request():
         request_body = request.get_json()
         if not common.validate_required_fields(request_body, '/job/execute'):
             return error_response(
-                "Request body must contain 'memberId' and 'jobId'",
+                "Request body must contain 'userId' and 'jobId'",
                 400
             )
 
     # /job/get-status
     # elif request.path == '/job' and request.method == 'GET':
-    #     if not (request.args.get('memberid') and request.args.get('jobid')):
+    #     if not (request.args.get('userId') and request.args.get('jobid')):
     #         return error_response(
-    #             "Query parameters 'memberid' and 'jobid' are required",
+    #             "Query parameters 'userId' and 'jobid' are required",
     #             400
     #         )
 
@@ -71,7 +71,7 @@ def validate_request():
     #     request_body = request.get_json()
     #     if not common.validate_required_fields(request_body, '/job/get-missing-results'):
     #         return error_response(
-    #             "Request body must contain 'memberId', 'jobId', and 'lastEventId'",
+    #             "Request body must contain 'userId', 'jobId', and 'lastEventId'",
     #             400
     #         )
 
@@ -90,7 +90,7 @@ def create_job() :
     question_id = str(request_data['questionId'])
     code_language = request_data['codeLanguage']
     code = request_data['code']
-    member_id = str(request_data['memberId'])
+    user_id = str(request_data['userId'])
 
     testcases = coditor.TESTCASE_DICT.get(question_id)
     new_job = common.create_job(question_id, code_language, code, len(testcases))
@@ -99,13 +99,13 @@ def create_job() :
     ) # 초 단위로 처리 (int 타입)
 
     # redis에 데이터를 저장, ttl 설정
-    res = job_repository.save(member_id, new_job, new_job_timeout)
+    res = job_repository.save(user_id, new_job, new_job_timeout)
 
     if res == 1:
         return success_response({"jobId": f"{new_job['jobId']}"}, 201)
 
     elif res == JOB_MAX_COUNT_EXCEEDED:
-        return error_response(f"Max job count exceeded for memberId = {member_id}", 422)
+        return error_response(f"Max job count exceeded for userId = {user_id}", 422)
 
     elif res == UNEXPECTED_ERROR:
         return error_response("Internal server error", 500)
@@ -116,25 +116,25 @@ def create_job() :
 @job_bp.route('/execute', methods=['POST'])
 def execute_job():
     request_data = request.get_json()
-    member_id = str(request_data['memberId'])
+    user_id = str(request_data['userId'])
     job_id = request_data['jobId']
 
-    job = job_repository.find_by_member_id_and_job_id(member_id, job_id)
+    job = job_repository.find_by_user_id_and_job_id(user_id, job_id)
 
     if not job:
-        return error_response(f"Job not found for member_id={member_id} with job_id={job_id}", 404)
+        return error_response(f"Job not found for user_id={user_id} with job_id={job_id}", 404)
 
-    celeryapp.execute_code.delay(member_id, job)
+    celeryapp.execute_code.delay(user_id, job)
     return success_response({"numOfTestcase": int(job["numOfTestcase"])}, 200)
 
 
 # @job_bp.route('', methods=['GET'])
 # def get_status():
 #     job_id = request.args.get('jobid')
-#     member_id = request.args.get('memberid')
+#     user_id = request.args.get('userId')
 #
-#     job = job_repository.find_by_member_id_and_job_id(member_id, job_id)
+#     job = job_repository.find_by_user_id_and_job_id(user_id, job_id)
 #     if not job:
-#         return error_response(f"Job not found for member_id={member_id} with job_id={job_id}", 404)
+#         return error_response(f"Job not found for user_id={user_id} with job_id={job_id}", 404)
 #
 #     return success_response(job, 200)

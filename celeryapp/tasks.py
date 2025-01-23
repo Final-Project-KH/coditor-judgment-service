@@ -30,12 +30,12 @@ except RedisConnectionError as e:
 
 # task에 매개변수를 전달하는 경우, 콜백 함수는 self를 인자로 받아야 한다.
 @app.task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_kwargs={'max_retries': 3})
-def execute_code(self, member_id: str, job: dict):
+def execute_code(self, user_id: str, job: dict):
     """
     Celery 작업: 코드를 실행하고 상태를 업데이트합니다.
 
     Args:
-        member_id (str): 회원 ID (PK)
+        user_id (str): 회원 ID (PK)
         job (dict): 실행할 작업 정보
     """
     job_id = job['jobId']
@@ -51,12 +51,12 @@ def execute_code(self, member_id: str, job: dict):
 
     print(f"Starting job {job_id}...")
     for tc in testcases:
-        latest_job = job_repository.find_by_member_id_and_job_id(member_id, job_id)
+        latest_job = job_repository.find_by_user_id_and_job_id(user_id, job_id)
         if not latest_job:
             pass
         if latest_job['stopFlag'] == 'true':
             print('[INFO] Stop flag raised')
-            job_repository.delete(member_id, job_id)
+            job_repository.delete(user_id, job_id)
             send_request(EXECUTE_JOB_CALLBACK_ENDPOINT, {"success": False, "error": f"작업이 성공적으로 중단되었습니다."})
             return
 
@@ -65,14 +65,14 @@ def execute_code(self, member_id: str, job: dict):
             print('[INFO] Unexpected error occurred in docker container. Task will die soon.')
             send_request(EXECUTE_JOB_CALLBACK_ENDPOINT,
                          {"success": False, "error": "코드 실행 중 예상치 못한 오류가 발생했습니다. 관리자에게 문의 바랍니다."})
-            job_repository.delete(member_id, job_id)
+            job_repository.delete(user_id, job_id)
             return
 
 
         test_result_dict['testcaseIndex'] = curr_testcase_index
         test_results.append(test_result_dict)
 
-        update_res = job_repository.update(member_id, job_id,
+        update_res = job_repository.update(user_id, job_id,
                               last_testcase_index=curr_testcase_index,
                               results=test_results,
                               status='complete' if curr_testcase_index == len(testcases) else 'inProgress')
@@ -87,16 +87,16 @@ def execute_code(self, member_id: str, job: dict):
                          {"success": False, "error": "실행 결과를 업데이트 하는 과정에서 예상치 못한 오류가 발생했습니다. 다시 시도해주세요. 이 경고가 반복될 경우 관리자에게 문의 바랍니다."})
             if callback_response_code != 200:
                 print(f"[INFO] No one can receive this result. Task will die soon. Status code: {callback_response_code}")
-                job_repository.delete(member_id, job_id)
+                job_repository.delete(user_id, job_id)
             return
 
         test_result_dict['jobId'] = job_id
-        test_result_dict['memberId'] = member_id
+        test_result_dict['userId'] = user_id
 
         callback_response_code = send_request(EXECUTE_JOB_CALLBACK_ENDPOINT, test_result_dict)
         if callback_response_code != 200:
             print(f"[INFO] No one can receive this result. Task will die soon. Status code: {callback_response_code}")
-            job_repository.delete(member_id, job_id)
+            job_repository.delete(user_id, job_id)
             return
 
         curr_testcase_index += 1

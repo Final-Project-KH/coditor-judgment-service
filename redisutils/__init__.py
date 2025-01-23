@@ -1,1 +1,1 @@
-from .repository import *
+from .repository import job_repository

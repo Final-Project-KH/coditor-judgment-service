@@ -2,7 +2,7 @@
 import json
 from typing import List, Optional, Union, Dict
 
-from .connection import RedisConnection
+from .connection import RedisConnection, RedisConnectionError
 
 # 전역 설정 값
 MAX_ACTIVE_JOBS_PER_MEMBER = 2
@@ -148,3 +148,8 @@ class JobRepository:
         active_jobs = self.find_by_user_id(user_id)
         return len(active_jobs) >= MAX_ACTIVE_JOBS_PER_MEMBER
 
+try:
+    job_repository = JobRepository()
+except RedisConnectionError as e:
+    print(e)
+    exit(1)

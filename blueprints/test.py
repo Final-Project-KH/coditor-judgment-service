@@ -1,9 +1,8 @@
 from flask import Blueprint, request
 
-from redisutils.repository import JobRepository
+from redisutils.repository import job_repository
 
 test_bp = Blueprint('test_bp', __name__)
-job_repository = JobRepository()
 
 # 단위 테스트
 # Celery JOB 실행 및 결과 수신

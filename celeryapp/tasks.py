@@ -3,10 +3,10 @@ from celery import Celery
 import os
 from dotenv import load_dotenv
 
-from redisutils.connection import RedisConnectionError
-from redisutils.repository import JobRepository, JOB_NO_LONGER_EXISTS, UNEXPECTED_ERROR
+from redisutils.repository import job_repository, JOB_NO_LONGER_EXISTS, UNEXPECTED_ERROR
 from common.lib import send_request
 import coditor
+
 
 # .env 파일 로드
 load_dotenv()
@@ -20,13 +20,6 @@ app = Celery(
     backend=REDIS_URL
 )
 app.conf.broker_connection_retry_on_startup = True
-
-# JobRepository 로드
-try:
-    job_repository = JobRepository()
-except RedisConnectionError as e:
-    print(e)
-    exit(1)
 
 # task에 매개변수를 전달하는 경우, 콜백 함수는 self를 인자로 받아야 한다.
 @app.task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_kwargs={'max_retries': 3})
@@ -61,7 +54,7 @@ def execute_code(self, user_id: str, job: dict):
             return
 
         test_result_dict = coditor.execute_with_docker(code_language, code, tc, timeout)
-        if test_result_dict.get("error") and test_result_dict.get("error").contains("예상치 못한 에러 발생"):
+        if test_result_dict.get("error") and "예상치 못한 에러 발생" in test_result_dict.get("error"):
             print('[INFO] Unexpected error occurred in docker container. Task will die soon.')
             send_request(EXECUTE_JOB_CALLBACK_ENDPOINT,
                          {"success": False, "error": "코드 실행 중 예상치 못한 오류가 발생했습니다. 관리자에게 문의 바랍니다."})

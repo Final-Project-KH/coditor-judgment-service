@@ -4,12 +4,11 @@ import math
 import common
 from common import error_response, success_response
 import security
-from redisutils.repository import JobRepository, JOB_MAX_COUNT_EXCEEDED, UNEXPECTED_ERROR
+from redisutils.repository import job_repository, JOB_MAX_COUNT_EXCEEDED, UNEXPECTED_ERROR
 import coditor
 import celeryapp
 
 job_bp = Blueprint('job_bp', __name__)
-job_repository = JobRepository()
 
 # -------------------------------------------------
 # Before Request Hook

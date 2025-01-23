@@ -95,3 +95,8 @@ def execute_code(self, user_id: str, job: dict):
         curr_testcase_index += 1
 
     print(f"Job {job_id} complete successfully...")
+    callback_response_code = send_request(EXECUTE_JOB_CALLBACK_ENDPOINT, {"success": True, "detail": "complete", "jobId": job_id})
+    if callback_response_code != 200:
+        print(f"[INFO] No one can receive this result. Task will die soon. Status code: {callback_response_code}")
+        job_repository.delete(user_id, job_id)
+        return

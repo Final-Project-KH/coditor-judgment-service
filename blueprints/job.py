@@ -57,6 +57,15 @@ def validate_request():
                 400
             )
 
+    # 3) /job/delete
+    elif request.path == '/job/delete' and request.method == 'DELETE':
+        request_body = request.get_json()
+        if not common.validate_required_fields(request_body, '/job/delete'):
+            return error_response(
+                "Request body must contain 'userId' and 'jobId'",
+                400
+            )
+
     # /job/get-status
     # elif request.path == '/job' and request.method == 'GET':
     #     if not (request.args.get('userId') and request.args.get('jobid')):
@@ -126,14 +135,16 @@ def execute_job():
     celeryapp.execute_code.delay(user_id, job)
     return success_response({"numOfTestcase": int(job["numOfTestcase"])}, 200)
 
+# 3) /job/delete
+@job_bp.route('/delete', methods=['DELETE'])
+def delete_job():
+    request_data = request.get_json()
+    user_id = str(request_data['userId'])
+    job_id = request_data['jobId']
 
-# @job_bp.route('', methods=['GET'])
-# def get_status():
-#     job_id = request.args.get('jobid')
-#     user_id = request.args.get('userId')
-#
-#     job = job_repository.find_by_user_id_and_job_id(user_id, job_id)
-#     if not job:
-#         return error_response(f"Job not found for user_id={user_id} with job_id={job_id}", 404)
-#
-#     return success_response(job, 200)
+    res = job_repository.delete(user_id, job_id)
+
+    if (res == UNEXPECTED_ERROR):
+        return error_response("Internal server error", 500)
+
+    return success_response({"result": res}, 200)

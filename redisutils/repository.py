@@ -5,7 +5,7 @@ from typing import List, Optional, Union, Dict
 from .connection import RedisConnection, RedisConnectionError
 
 # 전역 설정 값
-MAX_ACTIVE_JOBS_PER_MEMBER = 2
+MAX_ACTIVE_JOBS_PER_MEMBER = 20
 
 # 에러 코드 정의
 UNEXPECTED_ERROR = -1
@@ -141,7 +141,7 @@ class JobRepository:
             return result
 
         except Exception as e:
-            print(f"[save] Unexpected error: {e}")
+            print(f"[delete] Unexpected error: {e}")
             return UNEXPECTED_ERROR
 
     def _is_job_max_count_exceed(self, user_id: str) -> bool:

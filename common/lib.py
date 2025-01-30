@@ -24,6 +24,7 @@ def validate_required_fields(json_data: dict, endpoint: str) -> bool:
     required_fields = {
         "/job/create": ["code", "codeLanguage", "questionId", "userId"],
         "/job/execute": ["userId", "jobId"],
+        "/job/delete": ["userId", "jobId"],
         "/job/get-missing-results": ["userId", "jobId", "lastEventId"]
     }
 

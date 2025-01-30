@@ -13,7 +13,7 @@
 0, -1  |  -1
 
 [예시 답안]
-import java.common.Scanner;
+import java.util.Scanner;
 
 public class Main {
     public static void main(String[] args) {
@@ -45,7 +45,7 @@ public class Main {
 "12345"        |   "54321"
 
 [예시 답안]
-import java.common.Scanner;
+import java.util.Scanner;
 
 public class Main {
     public static void main(String[] args) {

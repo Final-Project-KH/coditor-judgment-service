@@ -4,7 +4,7 @@ import math
 import common
 from common import error_response, success_response
 import security
-from redisutils.repository import job_repository, JOB_MAX_COUNT_EXCEEDED, UNEXPECTED_ERROR
+from redisutils.repository import job_repository, JOB_MAX_COUNT_EXCEEDED, UNEXPECTED_ERROR, JOB_NO_LONGER_EXISTS
 import coditor
 import celeryapp
 
@@ -66,24 +66,15 @@ def validate_request():
                 400
             )
 
-    # /job/get-status
-    # elif request.path == '/job' and request.method == 'GET':
-    #     if not (request.args.get('userId') and request.args.get('jobid')):
-    #         return error_response(
-    #             "Query parameters 'userId' and 'jobid' are required",
-    #             400
-    #         )
+    # 4) /job/cancel
+    elif request.path == '/job/cancel' and request.method == 'POST':
+        request_body = request.get_json()
+        if not common.validate_required_fields(request_body, '/job/cancel'):
+            return error_response(
+                "Request body must contain 'userId' and 'jobId'",
+                400
+            )
 
-    # /job/get-missing-results
-    # elif request.path == '/job/get-missing-results' and request.method == 'POST':
-    #     request_body = request.get_json()
-    #     if not common.validate_required_fields(request_body, '/job/get-missing-results'):
-    #         return error_response(
-    #             "Request body must contain 'userId', 'jobId', and 'lastEventId'",
-    #             400
-    #         )
-
-    # before_request 검증 통과
     return None
 
 
@@ -148,3 +139,20 @@ def delete_job():
         return error_response("Internal server error", 500)
 
     return success_response({"result": res}, 200)
+
+# 4) /job/cancel
+@job_bp.route('/cancel', methods=['POST'])
+def cancel_job():
+    request_data = request.get_json()
+    user_id = str(request_data['userId'])
+    job_id = request_data['jobId']
+
+    res = job_repository.update(user_id, job_id, stop_flag=True)
+
+    if (res == JOB_NO_LONGER_EXISTS):
+        return error_response("Job not found for user_id={user_id} with job_id={job_id}", 404)
+
+    if (res == UNEXPECTED_ERROR):
+        return error_response("Internal server error", 500)
+
+    return success_response()

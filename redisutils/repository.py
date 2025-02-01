@@ -5,7 +5,7 @@ from typing import List, Optional, Union, Dict
 from .connection import RedisConnection, RedisConnectionError
 
 # 전역 설정 값
-MAX_ACTIVE_JOBS_PER_MEMBER = 20
+MAX_ACTIVE_JOBS_PER_MEMBER = 2
 
 # 에러 코드 정의
 UNEXPECTED_ERROR = -1
@@ -67,11 +67,11 @@ class JobRepository:
             if self._is_job_max_count_exceed(user_id):
                 return JOB_MAX_COUNT_EXCEEDED
 
-            self._redis_conn.execute_with_retry(
+            success = self._redis_conn.execute_with_retry(
                 self._redis_conn.client.setex, key, timeout, json.dumps(job)
             )
-            # 코드 흐름에서 1개만 저장되므로
-            return 1
+
+            return 1 if success else UNEXPECTED_ERROR
 
         except Exception as e:
             print(f"[save] Unexpected error: {e}")
@@ -115,11 +115,11 @@ class JobRepository:
 
             # ttl_value가 양수이면, 초(sec)를 의미
             if ttl_value > 0:
-                self._redis_conn.execute_with_retry(
+                success = self._redis_conn.execute_with_retry(
                     self._redis_conn.client.setex, key, ttl_value, json.dumps(job)
                 )
-                # 코드 흐름에서 1개만 업데이트 되므로
-                return 1
+
+                return 1 if success else UNEXPECTED_ERROR
 
             # ttl_value가 -1이면 ttl 설정되지 않은 상태 -> 로직상에서는 존재 할 수 없음
             # 그 외에는 알 수 없는 상태

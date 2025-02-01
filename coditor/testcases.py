@@ -81,7 +81,7 @@ public class Main {
 2024   |   true
 
 [예시 답안]
-import java.common.Scanner;
+import java.util.Scanner;
 
 public class Main {
     public static void main(String[] args) {
@@ -128,7 +128,7 @@ public class Main {
 9475    |   false
 
 [예시 답안]
-import java.common.Scanner;
+import java.util.Scanner;
 
 public class Main {
     public static void main(String[] args) {
@@ -177,7 +177,7 @@ public class Main {
 (5, 0)         |   5
 
 [예시 답안]
-import java.common.Scanner;
+import java.util.Scanner;
 
 public class Main {
     public static void main(String[] args) {

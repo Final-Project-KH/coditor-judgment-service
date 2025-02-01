@@ -50,7 +50,7 @@ def execute_code(self, user_id: str, job: dict):
         if latest_job['stopFlag'] == 'true':
             print(f'[Stop flag raised for job {job_id}...]')
             job_repository.delete(user_id, job_id)
-            send_request(EXECUTE_JOB_CALLBACK_ENDPOINT, {"success": True, "detail": f"작업이 성공적으로 중단되었습니다."})
+            send_request(EXECUTE_JOB_CALLBACK_ENDPOINT, {"success": True, "jobId": job_id, "detail": f"작업이 성공적으로 중단되었습니다."})
             return
 
         test_result_dict = coditor.execute_with_docker(code_language, code, tc, timeout)
@@ -58,7 +58,7 @@ def execute_code(self, user_id: str, job: dict):
             print(f'[Unexpected error occurred in docker container. Task will die soon for job {job_id}...]')
             job_repository.delete(user_id, job_id)
             send_request(EXECUTE_JOB_CALLBACK_ENDPOINT,
-                         {"success": False, "error": "코드 실행 중 예상치 못한 오류가 발생했습니다. 관리자에게 문의 바랍니다."})
+                         {"success": False, "jobId": job_id, "error": "코드 실행 과정에서 예상치 못한 오류가 발생했습니다. 관리자에게 문의 바랍니다."})
             return
 
         test_result_dict['testcaseIndex'] = curr_testcase_index
@@ -72,14 +72,14 @@ def execute_code(self, user_id: str, job: dict):
         if update_res == JOB_NO_LONGER_EXISTS :
             print(f'[Job {job_id} no longer exists. Task will die soon...]')
             send_request(EXECUTE_JOB_CALLBACK_ENDPOINT,
-                         {"success": False, "error": "코드 실행 작업이 만료되었습니다. 다시 시도해주세요. 이 경고가 반복될 경우 관리자에게 문의 바랍니다."})
+                         {"success": False, "jobId": job_id, "error": "코드 실행 작업이 만료되었습니다. 다시 시도해주세요. 이 경고가 반복될 경우 관리자에게 문의 바랍니다."})
             return
 
         elif update_res == UNEXPECTED_ERROR:
             print(f'[Unexpected error occurred during update job {job_id}. Task will die soon...]')
             job_repository.delete(user_id, job_id)
             send_request(EXECUTE_JOB_CALLBACK_ENDPOINT,
-                         {"success": False, "error": "코드 실행 결과를 업데이트 하는 과정에서 예상치 못한 오류가 발생했습니다. 다시 시도해주세요. 이 경고가 반복될 경우 관리자에게 문의 바랍니다."})
+                         {"success": False, "jobId": job_id, "error": "코드 실행 결과를 업데이트 하는 과정에서 예상치 못한 오류가 발생했습니다. 다시 시도해주세요. 이 경고가 반복될 경우 관리자에게 문의 바랍니다."})
             return
 
         test_result_dict['jobId'] = job_id
@@ -95,7 +95,7 @@ def execute_code(self, user_id: str, job: dict):
         curr_testcase_index += 1
 
     print(f"[Job {job_id} complete successfully...]")
-    callback_response_code = send_request(EXECUTE_JOB_CALLBACK_ENDPOINT, {"success": True, "detail": "complete", "jobId": job_id})
+    callback_response_code = send_request(EXECUTE_JOB_CALLBACK_ENDPOINT, {"success": True, "jobId": job_id, "detail": "complete"})
     if callback_response_code != 200:
         print(f"[No one can receive this result. Task will die soon for job {job_id}. Status code: {callback_response_code}]")
         job_repository.delete(user_id, job_id)

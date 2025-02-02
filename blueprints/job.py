@@ -4,7 +4,7 @@ import math
 import common
 from common import error_response, success_response
 import security
-from redisutils.repository import job_repository, JOB_MAX_COUNT_EXCEEDED, UNEXPECTED_ERROR, JOB_NO_LONGER_EXISTS
+from redisutils.repository import job_repository, JOB_MAX_COUNT_EXCEEDED, UNEXPECTED_ERROR, JOB_NOT_FOUND
 import coditor
 import celeryapp
 
@@ -149,7 +149,7 @@ def cancel_job():
 
     res = job_repository.update(user_id, job_id, stop_flag=True)
 
-    if (res == JOB_NO_LONGER_EXISTS):
+    if (res == JOB_NOT_FOUND):
         return error_response("Job not found for user_id={user_id} with job_id={job_id}", 404)
 
     if (res == UNEXPECTED_ERROR):

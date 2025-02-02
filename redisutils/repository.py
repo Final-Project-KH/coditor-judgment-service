@@ -10,7 +10,7 @@ MAX_ACTIVE_JOBS_PER_MEMBER = 2
 # 에러 코드 정의
 UNEXPECTED_ERROR = -1
 JOB_MAX_COUNT_EXCEEDED   = -2
-JOB_NO_LONGER_EXISTS = -3
+JOB_NOT_FOUND = -3
 
 
 class JobRepository:
@@ -89,7 +89,7 @@ class JobRepository:
         try:
             job = self.find_by_user_id_and_job_id(user_id, job_id)
             if not job:
-                return JOB_NO_LONGER_EXISTS
+                return JOB_NOT_FOUND
 
             # 기존 키의 TTL 조회
             ttl_value = self._redis_conn.execute_with_retry(
@@ -98,7 +98,7 @@ class JobRepository:
 
             # ttl_value가 -2이면 키가 존재하지 않음
             if ttl_value == -2:
-                return JOB_NO_LONGER_EXISTS
+                return JOB_NOT_FOUND
 
             # 필요한 항목만 업데이트
             if stop_flag is not None:

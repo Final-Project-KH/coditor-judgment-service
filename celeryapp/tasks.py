@@ -3,7 +3,7 @@ from celery import Celery
 import os
 from dotenv import load_dotenv
 
-from redisutils.repository import job_repository, JOB_NO_LONGER_EXISTS, UNEXPECTED_ERROR
+from redisutils.repository import job_repository, JOB_NOT_FOUND, UNEXPECTED_ERROR
 from common.lib import send_request
 import coditor
 
@@ -69,7 +69,7 @@ def execute_code(self, user_id: str, job: dict):
                               results=test_results,
                               status='complete' if curr_testcase_index == len(testcases) else 'inProgress')
 
-        if update_res == JOB_NO_LONGER_EXISTS :
+        if update_res == JOB_NOT_FOUND :
             print(f'[Job {job_id} no longer exists. Task will die soon...]')
             send_request(EXECUTE_JOB_CALLBACK_ENDPOINT,
                          {"success": False, "jobId": job_id, "error": "코드 실행 작업이 만료되었습니다. 다시 시도해주세요. 이 경고가 반복될 경우 관리자에게 문의 바랍니다."})

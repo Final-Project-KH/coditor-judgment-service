@@ -113,7 +113,7 @@ def create_job(
         "lastTestcaseIndex": "0",
         "status": "ready",
         "stopFlag": str(False).lower(),
-        "createdAt": now_in_seoul.isoformat(),
+        "createdAt": now_in_seoul.strftime('%Y-%m-%dT%H:%M:%S'),
         "results": []
     }
     return job

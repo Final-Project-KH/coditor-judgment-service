@@ -129,4 +129,4 @@ def send_request(url: str, json_payload: dict) -> int:
 
         return response.status_code
     except requests.exceptions.RequestException as e:
-        return e.response.status_code
+        return getattr(e.response, "status_code", 500)

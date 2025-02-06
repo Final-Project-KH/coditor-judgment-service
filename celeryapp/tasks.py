@@ -212,13 +212,13 @@ def execute_with_docker(
             response["success"] = False
 
     if len(outputs) > int(outputs[0]) + 1:
-        response["memoryUsage"] = outputs[int(outputs[0]) + 2]
+        response["memoryUsage"] = outputs[int(outputs[0]) + 1]
 
     if len(outputs) > int(outputs[0]) + 2:
-        response["runningTime"] = outputs[int(outputs[0]) + 3]
+        response["runningTime"] = outputs[int(outputs[0]) + 2]
 
     if len(outputs) > int(outputs[0]) + 3:
-        response["codeSize"] = outputs[int(outputs[0]) + 4]
+        response["codeSize"] = outputs[int(outputs[0]) + 3]
 
     print(response)
     return response

@@ -1,4 +1,4 @@
-# celeryapp/tasks.py
+# celeryutils/tasks.py
 from celery import Celery
 import os
 from dotenv import load_dotenv
@@ -18,7 +18,7 @@ EXECUTE_JOB_CALLBACK_ENDPOINT = os.getenv("EXECUTE_JOB_CALLBACK_ENDPOINT")
 
 # Celery APP 인스턴스 생성
 app = Celery(
-    'sasuke', # 실행 할 celeryapp 앱의 이름 설정
+    'sasuke', # 실행 할 celeryutils 앱의 이름 설정
     broker=REDIS_URL,
     backend=REDIS_URL
 )

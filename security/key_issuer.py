@@ -1,8 +1,8 @@
 # key_issuer.py
 import os
-from security import lib
 from dotenv import load_dotenv
 
+import security
 
 # API 키 발급용 유틸
 if __name__ == "__main__":
@@ -20,9 +20,9 @@ if __name__ == "__main__":
         raise RuntimeError("CLIENT_ID is not set in the environment variables.")
 
     # HMAC Key 생성
-    generated_key = lib.generate_hmac_key(CLIENT_ID)
+    generated_key = security.generate_hmac_key(CLIENT_ID)
     print(f"Key generation failed.") if generated_key is None else print(f"Generated Key for host_id '{CLIENT_ID}': {generated_key}")
 
     # 생성된 Key가 유효한지 확인
-    is_valid = lib.validate_hmac_key(generated_key, CLIENT_ID)
+    is_valid = security.validate_hmac_key(generated_key, CLIENT_ID)
     print(f"Is the generated key valid? {is_valid}")

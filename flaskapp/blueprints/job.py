@@ -3,10 +3,10 @@ import math
 
 import common
 from common import error_response, success_response
-import security
+from flaskapp.security import validate_hmac_key
 from redisutils.repository import job_repository, JOB_MAX_COUNT_EXCEEDED, UNEXPECTED_ERROR, JOB_NOT_FOUND
-import coditor
 import celeryapp
+from constant.testcases import TESTCASE_DICT, TESTCASE_TIMEOUT_LIMIT
 
 job_bp = Blueprint('job_bp', __name__)
 
@@ -23,7 +23,7 @@ def validate_request():
     # 1) 키 검증
     api_key = request.headers.get("X-Api-Key")
     client_id = request.headers.get("X-Client-Id")
-    if not (api_key and client_id) or not security.validate_hmac_key(api_key, client_id):
+    if not (api_key and client_id) or not validate_hmac_key(api_key, client_id):
         return error_response("Forbidden", 403)
 
     # 2) JSON 형식 및 구조 검증 (모든 request에서 JSON 본문이 아니면 400)
@@ -44,7 +44,7 @@ def validate_request():
                 "Request body must contain 'code', 'codeLanguage', 'questionId', and 'userId'",
                 400
             )
-        testcases = coditor.TESTCASE_DICT.get(str(request_body["questionId"]))
+        testcases = TESTCASE_DICT.get(str(request_body["questionId"]))
         if not testcases:
             return error_response("Provided value for 'questionId' does not exist", 404)
 
@@ -91,10 +91,10 @@ def create_job() :
     code = request_data['code']
     user_id = str(request_data['userId'])
 
-    testcases = coditor.TESTCASE_DICT.get(question_id)
+    testcases = TESTCASE_DICT.get(question_id)
     new_job = common.create_job(question_id, code_language, code, len(testcases))
     new_job_timeout = math.floor(
-        len(testcases) * coditor.TESTCASE_TIMEOUT_LIMIT.get(question_id) * 2
+        len(testcases) * TESTCASE_TIMEOUT_LIMIT.get(question_id) * 2
     ) # 초 단위로 처리 (int 타입)
 
     # redis에 데이터를 저장, ttl 설정

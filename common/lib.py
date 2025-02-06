@@ -4,7 +4,6 @@ from typing import Optional
 import requests
 import flask
 import pytz
-from flask import Response
 import random
 import string
 import json
@@ -53,7 +52,7 @@ def success_response(data: Optional[dict] = None, http_status: int = 200) -> fla
 
 def _convert_data_to_json_content_type_response(data: dict, code: int) -> flask.Response:
     response_json = json.dumps(data, ensure_ascii=False)
-    response = Response(response_json, status=code, content_type="application/json")
+    response = flask.Response(response_json, status=code, content_type="application/json")
     return response
 
 

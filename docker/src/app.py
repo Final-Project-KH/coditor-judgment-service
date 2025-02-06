@@ -110,10 +110,11 @@ def main():
     end_time = time.time()
     usage = resource.getrusage(resource.RUSAGE_CHILDREN)
     memory_mb = usage.ru_maxrss / 1024.0
+    lines_count = len(proc_run.stdout.strip().splitlines())
 
     msg = (
-    "Success\n"
-    f"{proc_run.stdout.strip()}\n"
+    f"{lines_count}\n"
+    f"{proc_run.stdout}\n"
     f"{round(memory_mb, 2)}\n"
     f"{round((end_time - start_time) * 1000)}\n"
     f"{len(code_str)}"

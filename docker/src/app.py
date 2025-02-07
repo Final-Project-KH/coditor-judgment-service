@@ -114,7 +114,7 @@ def main():
 
     msg = (
     f"{lines_count}\n"
-    f"{proc_run.stdout}\n"
+    f"{proc_run.stdout.strip()}\n"
     f"{round(memory_mb, 2)}\n"
     f"{round((end_time - start_time) * 1000)}\n"
     f"{len(code_str)}"

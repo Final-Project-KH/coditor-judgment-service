@@ -96,6 +96,7 @@ def execute_code(self, user_id: str, job: dict):
             test_result_dict['userId'] = user_id
 
             print(f"[Testcase {curr_testcase_index} for job {job_id} successfully executed]")
+            print(test_result_dict)
             callback_response_code = send_request(EXECUTE_JOB_CALLBACK_ENDPOINT, test_result_dict)
             if callback_response_code != 200:
                 print(
@@ -202,23 +203,29 @@ def execute_with_docker(
     # outputs[int(outputs[0]) + 2]: runningTime
     # outputs[int(outputs[0]) + 3]: codeSize
 
-    if len(outputs) > 1:
-        result = '\n'.join(outputs[1:int(outputs[0]) + 1])  # 첫 번째 라인 이후의 결과들
-        response["result"] = result
+    print(outputs)
 
+    if int(outputs[0]) >= 1:
+        result = '\n'.join(outputs[1:int(outputs[0]) + 1])  # 첫 번째 라인 이후의 결과들
         if testcase[1] == result:
             response["success"] = True
         else:
             response["success"] = False
 
-    if len(outputs) > int(outputs[0]) + 1:
-        response["memoryUsage"] = outputs[int(outputs[0]) + 1]
+        if len(outputs) > int(outputs[0]) + 1:
+            response["memoryUsage"] = outputs[int(outputs[0]) + 1]
 
-    if len(outputs) > int(outputs[0]) + 2:
-        response["runningTime"] = outputs[int(outputs[0]) + 2]
+        if len(outputs) > int(outputs[0]) + 2:
+            response["runningTime"] = outputs[int(outputs[0]) + 2]
 
-    if len(outputs) > int(outputs[0]) + 3:
-        response["codeSize"] = outputs[int(outputs[0]) + 3]
+        if len(outputs) > int(outputs[0]) + 3:
+            response["codeSize"] = outputs[int(outputs[0]) + 3]
 
-    print(response)
+    # 정상 종료 했으나 result (출력)이 없음
+    else:
+        response["success"] = False
+        response["memoryUsage"] = outputs[2]
+        response["runningTime"] = outputs[3]
+        response["codeSize"] = outputs[4]
+
     return response

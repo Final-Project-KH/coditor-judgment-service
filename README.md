@@ -1,7 +1,7 @@
 # 🚀 Coditor 코드 채점 API 서버
 
 **Coditor 채점 시스템의 MSA 기반 API 서버입니다.**  
-코드 채점 요청을 Redis 태스크 큐에 등록하고 Celery Worker를 통해 비동기적(WebHook)으로 결과를 반환합니다.
+코드 채점 요청을 Redis 메시지 브로커 기능을 활용해 Celery 태스크 큐에 등록하고, Celery Worker는 채점 결과를 비동기적(WebHook Callback)으로 전달합니다.
 
 <br /><br />
 
